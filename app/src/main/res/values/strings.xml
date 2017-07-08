@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">WifiTools</string>
+    <string name="gps_pause">Pause GPS</string>
+    <string name="gps_resume">Resume GPS</string>
+</resources>
