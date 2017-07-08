@@ -26,6 +26,9 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.List;
 
 public class MainActivity extends Activity {
@@ -36,14 +39,15 @@ public class MainActivity extends Activity {
     private static long gpsMinTime = 1000; // milliseconds
     private static float gpsMinDistance = 1; // meters
 
-
     private final String[] permissions = new String[] {
+            Manifest.permission.INTERNET,
             Manifest.permission.ACCESS_FINE_LOCATION,
             Manifest.permission.ACCESS_WIFI_STATE,
             Manifest.permission.CHANGE_WIFI_STATE,
     };
 
 
+    // Wifi Stuff
     WifiManager wifiManager;
     WifiBroadcastReceiver broadcastReceiver;
     ArrayAdapter<String> wifiListAdapter;
@@ -53,6 +57,8 @@ public class MainActivity extends Activity {
     double longitudeGPS, latitudeGPS;
     TextView longitudeValueGPS, latitudeValueGPS;
 
+    // Transmission of data to the server
+    ResultSender resultSender = new ResultSender();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,12 +103,37 @@ public class MainActivity extends Activity {
                     // unprotected wifi
                     Log.i(TAG, s.toString());
                     wifiListAdapter.add(s.toString());
+                    addScanResult(s);
                 }
             }
 
         }
     }
 
+    private void addScanResult(ScanResult s){
+        try{
+            JSONObject obj = new JSONObject();
+            obj.put("longitude", longitudeGPS);
+            obj.put("latitude", latitudeGPS);
+            obj.put("timestamp", s.timestamp);
+            obj.put("SSID", s.SSID);
+            obj.put("BSSID", s.BSSID);
+            obj.put("dBm", s.level);
+            obj.put("frequency", s.frequency);
+            obj.put("channelWidth", s.channelWidth);
+
+            if (s.centerFreq0 > 0){
+                obj.put("centerFreq0", s.centerFreq0);
+            }
+            if (s.centerFreq1 > 0){
+                obj.put("centerFreq1", s.centerFreq1);
+            }
+
+            resultSender.enqueue(obj);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     private void showAlert() {
         final AlertDialog.Builder dialog = new AlertDialog.Builder(this);
